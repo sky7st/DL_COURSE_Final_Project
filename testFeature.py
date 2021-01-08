@@ -2,15 +2,16 @@ import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
 
+filename = "data_new.h5"
 ####my label param####
 
 label_basics = ["VirtualOne", "VirtualTwo", "VirtualThree",
-                "VirtualFour","VirtualScissors", "VirtualPaper",
+                "VirtualFour", "VirtualFive",
                 "VirtualStone","VirtualGood", "VirtualOK",
                 "VirtualRotate","Other"]
 # label_name = "VirtualMouse"    ## 2 finger
 # label_name = "VirtualSelect"   ## 1 finger
-label_name = label_basics[1]     ## other (background)
+label_name = label_basics[9]     ## other (background)
 
 ######################
 
@@ -74,5 +75,6 @@ all_frame_features = np.array(all_frame_features)
 shape = all_frame_features.shape
 dataset_name = "{}_{}".format(label_name, int(time.time()))
 
-with h5py.File('data1.h5', 'a') as h5f:
+with h5py.File(filename, 'a') as h5f:
     h5f.create_dataset(dataset_name, data=all_frame_features)
+    print("save {} to file!".format(dataset_name))
