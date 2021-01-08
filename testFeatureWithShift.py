@@ -1,26 +1,40 @@
 import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
-import tensorflow as tf
 
+####my label param####
 
-labels = ['VirtualFive', 'VirtualFour', 'VirtualGood', 
-          'VirtualOK', 'VirtualOne', 'VirtualRotate', 
-          'VirtualStone', 'VirtualThree', 'VirtualTwo']
-# model = tf.keras.models.load_model('model.h5')
-# model = tf.keras.models.load_model('model_4.h5')
-model = tf.keras.models.load_model('model_9.h5')
+label_basics = ["VirtualOne", "VirtualTwo", "VirtualThree",
+                "VirtualFour","VirtualScissors", "VirtualPaper",
+                "VirtualStone","VirtualGood", "VirtualOK",
+                "VirtualRotate","Other"]
+# label_name = "VirtualMouse"    ## 2 finger
+# label_name = "VirtualSelect"   ## 1 finger
+label_name = label_basics[0]     ## other (background)
+
+######################
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
-
+cam_h = 480
+cam_w = 640
 # For webcam input:
 hands = mp_hands.Hands(
     static_image_mode=False,
+    # static_image_mode=True,
     max_num_hands=1,
     min_detection_confidence=0.7, 
     min_tracking_confidence=0.3
 )
+cap = cv2.VideoCapture(cv2.CAP_DSHOW)
+all_frame_features = []
+cnt = 0
+def drawData(img, data):
+    for i in range(data.shape[0]):
+        x = int(data[i][0] * cam_w)
+        y = int(data[i][1] * cam_h)
+        img = cv2.circle(img, (x, y), radius=0, color=(0, 0, 255), thickness=4)
+    return img
 def calShift(data):
     data_copy = data.copy()
     shift_arr = np.argmin(data, axis=0)
@@ -28,8 +42,9 @@ def calShift(data):
     data_copy[:,1] -= data[shift_arr[1],1] ##Y
     data_copy[:,2] -= data[shift_arr[2],2] ##Z
     return data_copy
-cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 while cap.isOpened():
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    print(fps)
     success, image = cap.read()
     if not success:
         print("Ignoring empty camera frame.")
@@ -50,8 +65,10 @@ while cap.isOpened():
 
     one_frame_feature = []
     if results.multi_hand_landmarks:
+        # print(results.multi_handedness)
         # for hand_landmarks in results.multi_hand_landmarks:
         hand_landmarks = results.multi_hand_landmarks[0]
+
         mp_drawing.draw_landmarks(image, hand_landmarks)
         
         for i, data_point in enumerate(hand_landmarks.landmark):
@@ -59,18 +76,22 @@ while cap.isOpened():
                 np.array([data_point.x, data_point.y, data_point.z])
             )
         one_frame_feature = np.array(one_frame_feature)
-        one_frame_feature_shift = calShift(one_frame_feature)
 
-        # x_test = np.expand_dims(one_frame_feature, axis=0)
-        x_test = np.expand_dims(one_frame_feature_shift, axis=0)
-        result = model.predict(x_test)
-        result_index = result[0].argmax()
-        # print(result_index)
-        cv2.putText(image, "Result:{} {}".format(result_index, labels[result_index]), (10, 30), 1, 2, (0, 0, 255), 2)
+        one_frame_feature_shift = calShift(one_frame_feature)
+        image = drawData(image, one_frame_feature_shift)
+        all_frame_features.append(one_frame_feature_shift)
+        cnt += 1
+    cv2.putText(image, "Cnt:{}".format(cnt), (10, 30), 1, 2, (0, 0, 255), 2)
 
     cv2.imshow('MediaPipe Hands', image)
     if cv2.waitKey(5) & 0xFF == 27:
         break
-
 hands.close()
 cap.release()
+
+all_frame_features = np.array(all_frame_features)
+shape = all_frame_features.shape
+dataset_name = "{}_{}".format(label_name, int(time.time()))
+
+# with h5py.File('data1.h5', 'a') as h5f:
+#     h5f.create_dataset(dataset_name, data=all_frame_features)
