@@ -18,7 +18,7 @@ def drawData(data):
         y = int(data[i][1] * cam_h)
         empty_img = cv2.circle(empty_img, (x, y), radius=0, color=(0, 0, 255), thickness=4)
     return empty_img
-with h5py.File(filename, 'r') as h5f:
+with h5py.File(filename, 'r+') as h5f:
     
     labels = list(h5f.keys())
     max_label_index = len(labels) - 1
@@ -76,8 +76,59 @@ with h5py.File(filename, 'r') as h5f:
                 cv2.putText(img, "shape:{}".format(data.shape), (10, 80), 0, 1, (255, 0, 0))
                 cv2.imshow('MediaPipe Hands', img)
             else:
-                if key == 27:
+                if key == 27: ##ESC
                     break
+                elif key == 100: ##d  ##delete one index data
+                    print("D")
+                    dataset = h5f[label][()]
+                    
+                    res = np.delete(dataset, show_data_index, axis=0)  # delete element with index 1, i.e. second element
+                    
+                    h5f.__delitem__(label)  # delete existing dataset
+                    if res.size != 0:
+                        h5f[label] = res  # reassign to dataset
+                        dataset = h5f[label][()]
+                        max_data_index = dataset.shape[0] - 1
+                        if show_data_index >= max_data_index:
+                            show_data_index = 0
+                        else:
+                            show_data_index += 1
+                    else:
+                        labels = list(h5f.keys())
+                        max_label_index = len(labels) - 1
+                        if show_key_index >= max_label_index:
+                            show_key_index = 0
+                        else:
+                            show_key_index += 1
+                        label = labels[show_key_index]
+                        dataset = h5f[label][()]
+                        max_data_index = dataset.shape[0] - 1
+                        show_data_index = 0
+                    data = dataset[show_data_index]
+                    img = drawData(data)
+                    cv2.putText(img, "index: {}".format(show_data_index), (10, 30), 0, 1, (255, 0, 0))
+                    cv2.putText(img, "label: {}".format(label), (10, 55), 0, 1, (255, 0, 0))
+                    cv2.putText(img, "shape:{}".format(data.shape), (10, 80), 0, 1, (255, 0, 0))
+                    cv2.imshow('MediaPipe Hands', img)
+
+                elif key == 102: ##f delete this label
+                    del h5f[label]
+                    labels = list(h5f.keys())
+                    max_label_index = len(labels) - 1
+                    if show_key_index >= max_label_index:
+                        show_key_index = 0
+                    else:
+                        show_key_index += 1
+                    label = labels[show_key_index]
+                    dataset = h5f[label][()]
+                    max_data_index = dataset.shape[0] - 1
+                    show_data_index = 0
+                    data = dataset[show_data_index]
+                    img = drawData(data)
+                    cv2.putText(img, "index: {}".format(show_data_index), (10, 30), 0, 1, (255, 0, 0))
+                    cv2.putText(img, "label: {}".format(label), (10, 55), 0, 1, (255, 0, 0))
+                    cv2.putText(img, "shape:{}".format(data.shape), (10, 80), 0, 1, (255, 0, 0))
+                    cv2.imshow('MediaPipe Hands', img)
         except KeyboardInterrupt:
             break
 
