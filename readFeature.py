@@ -20,8 +20,8 @@ def drawData(data):
         y = int(data[i][1] * cam_h)
         empty_img = cv2.circle(empty_img, (x, y), radius=0, color=(0, 0, 255), thickness=4)
     return empty_img
-
 with h5py.File(filename, 'r') as h5f:
+    
     labels = list(h5f.keys())
     max_label_index = len(labels) - 1
 

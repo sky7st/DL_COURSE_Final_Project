@@ -1,0 +1,5 @@
+opencv_python==4.4.0.46
+numpy==1.19.3
+tensorflow==2.4.0
+h5py==2.9.0
+mediapipe==0.8.2

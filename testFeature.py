@@ -4,32 +4,28 @@ import numpy as np
 
 ####my label param####
 
-label_basics = ["VirtualMouse", "VirtualSelect", "Other"]
-# label_name = "VirtualMouse"  ## 2 finger
+label_basics = ["VirtualOne", "VirtualTwo", "VirtualThree",
+                "VirtualFour","VirtualScissors", "VirtualPaper",
+                "VirtualStone","VirtualGood", "VirtualOK",
+                "VirtualRotate","Other"]
+# label_name = "VirtualMouse"    ## 2 finger
 # label_name = "VirtualSelect"   ## 1 finger
-label_name = label_basics[2]            ## other (background)
-
-save_path = "Dataset/"
-######################
-
-full_save_path = save_path + label_name + "/"
-
-####file save pre#####
-if not (os.path.isdir(full_save_path)):
-    os.mkdir(full_save_path)
+label_name = label_basics[2]     ## other (background)
 
 ######################
+
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
 # For webcam input:
 hands = mp_hands.Hands(
     static_image_mode=False,
-    max_num_hands=1,
+    # static_image_mode=True,
+    max_num_hands=2,
     min_detection_confidence=0.7, 
     min_tracking_confidence=0.3
 )
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 all_frame_features = []
 while cap.isOpened():
     success, image = cap.read()
@@ -52,17 +48,18 @@ while cap.isOpened():
 
     one_frame_feature = []
     if results.multi_hand_landmarks:
-        # for hand_landmarks in results.multi_hand_landmarks:
-        hand_landmarks = results.multi_hand_landmarks[0]
-        mp_drawing.draw_landmarks(image, hand_landmarks)
-        
-        for i, data_point in enumerate(hand_landmarks.landmark):
-            one_frame_feature.append(
-                np.array([data_point.x, data_point.y, data_point.z])
-            )
-        one_frame_feature = np.array(one_frame_feature)
-        all_frame_features.append(one_frame_feature)
-    print(len(all_frame_features))
+        # print(results.multi_handedness)
+        for hand_landmarks in results.multi_hand_landmarks:
+
+            mp_drawing.draw_landmarks(image, hand_landmarks)
+            
+            for i, data_point in enumerate(hand_landmarks.landmark):
+                one_frame_feature.append(
+                    np.array([data_point.x, data_point.y, data_point.z])
+                )
+            one_frame_feature = np.array(one_frame_feature)
+            all_frame_features.append(one_frame_feature)
+
     cv2.imshow('MediaPipe Hands', image)
     if cv2.waitKey(5) & 0xFF == 27:
         break
