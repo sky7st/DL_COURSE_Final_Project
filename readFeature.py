@@ -2,9 +2,7 @@ import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
 
-label_basics = ["VirtualMouse", "VirtualSelect", "Other"]
-
-filename = "data.h5"
+filename = "data1.h5"
 
 labels = []
 show_data_index = 0

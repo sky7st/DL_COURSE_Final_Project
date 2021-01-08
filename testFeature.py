@@ -10,7 +10,7 @@ label_basics = ["VirtualOne", "VirtualTwo", "VirtualThree",
                 "VirtualRotate","Other"]
 # label_name = "VirtualMouse"    ## 2 finger
 # label_name = "VirtualSelect"   ## 1 finger
-label_name = label_basics[2]     ## other (background)
+label_name = label_basics[1]     ## other (background)
 
 ######################
 
@@ -21,12 +21,13 @@ mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(
     static_image_mode=False,
     # static_image_mode=True,
-    max_num_hands=2,
+    max_num_hands=1,
     min_detection_confidence=0.7, 
     min_tracking_confidence=0.3
 )
 cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 all_frame_features = []
+cnt = 0
 while cap.isOpened():
     success, image = cap.read()
     if not success:
@@ -49,16 +50,19 @@ while cap.isOpened():
     one_frame_feature = []
     if results.multi_hand_landmarks:
         # print(results.multi_handedness)
-        for hand_landmarks in results.multi_hand_landmarks:
+        # for hand_landmarks in results.multi_hand_landmarks:
+        hand_landmarks = results.multi_hand_landmarks[0]
 
-            mp_drawing.draw_landmarks(image, hand_landmarks)
-            
-            for i, data_point in enumerate(hand_landmarks.landmark):
-                one_frame_feature.append(
-                    np.array([data_point.x, data_point.y, data_point.z])
-                )
-            one_frame_feature = np.array(one_frame_feature)
-            all_frame_features.append(one_frame_feature)
+        mp_drawing.draw_landmarks(image, hand_landmarks)
+        
+        for i, data_point in enumerate(hand_landmarks.landmark):
+            one_frame_feature.append(
+                np.array([data_point.x, data_point.y, data_point.z])
+            )
+        one_frame_feature = np.array(one_frame_feature)
+        all_frame_features.append(one_frame_feature)
+        cnt += 1
+    cv2.putText(image, "Cnt:{}".format(cnt), (10, 30), 1, 2, (0, 0, 255), 2)
 
     cv2.imshow('MediaPipe Hands', image)
     if cv2.waitKey(5) & 0xFF == 27:
@@ -70,5 +74,5 @@ all_frame_features = np.array(all_frame_features)
 shape = all_frame_features.shape
 dataset_name = "{}_{}".format(label_name, int(time.time()))
 
-with h5py.File('data.h5', 'a') as h5f:
+with h5py.File('data1.h5', 'a') as h5f:
     h5f.create_dataset(dataset_name, data=all_frame_features)
