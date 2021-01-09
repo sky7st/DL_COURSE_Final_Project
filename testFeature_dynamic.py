@@ -7,7 +7,7 @@ video_folder_path = "Video"
 save_filename = "data_dynamic.h5"
 
 fps = 30
-timeout_ms = int(1000.0/30)
+timeout_ms = int(1000.0/fps)
 ####my label param####
 
 label_basics = ["MouseLeft", "MouseRight", "MouseMove",
@@ -37,13 +37,16 @@ hands = mp_hands.Hands(
 
 end_flag = False
 video_features = []
+
+file_cnt = 0
 for video_path in video_paths:
     filename = os.path.basename(video_path)
     
     cap = cv2.VideoCapture(video_path)
     cap_type = cap.get(cv2.CAP_PROP_BACKEND)
+    print(cap.get(cv2.CAP_PROP_FPS))
     all_frame_features = []
-    cnt = 0
+    frame_cnt = 0
     while cap.isOpened():
         success, image = cap.read()
         if not success:
@@ -57,6 +60,7 @@ for video_path in video_paths:
         # Flip the image horizontally for a later selfie-view display, and convert
         # the BGR image to RGB.
         image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+
         # To improve performance, optionally mark the image as not writeable to
         # pass by reference.
         image.flags.writeable = False
@@ -80,10 +84,9 @@ for video_path in video_paths:
                 )
             one_frame_feature = np.array(one_frame_feature)
             all_frame_features.append(one_frame_feature)
-            cnt += 1
+            frame_cnt += 1
+        cv2.putText(image, "Cnt:{}, Frame Cnt:{}".format(file_cnt, frame_cnt), (10, 50), 1, 2, (0, 0, 255), 2)
         cv2.putText(image, "File:{}".format(filename), (10, 30), 1, 2, (0, 0, 255), 2)
-        cv2.putText(image, "Cnt:{}".format(cnt), (10, 50), 1, 2, (0, 0, 255), 2)
-
         cv2.imshow('MediaPipe Hands', image)
         if cv2.waitKey(timeout_ms) & 0xFF == 27:
             end_flag = True
@@ -94,6 +97,7 @@ for video_path in video_paths:
     video_features.append(all_frame_features)
     dataset_name = "{}_{}".format(label_name, int(time.time()))
     dataset_names.append(dataset_name)
+    file_cnt += 1
 hands.close()
 cap.release()
 
