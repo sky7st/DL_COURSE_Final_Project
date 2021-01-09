@@ -3,6 +3,9 @@ import mediapipe as mp
 import numpy as np
 from utils import *
 
+cap = cv2.VideoCapture(cv2.CAP_DSHOW)
+# cap = cv2.VideoCapture("example.mkv")
+
 ####my label param####
 
 label_basics = ["VirtualOne", "VirtualTwo", "VirtualThree",
@@ -27,17 +30,21 @@ hands = mp_hands.Hands(
     min_detection_confidence=0.7, 
     min_tracking_confidence=0.3
 )
-cap = cv2.VideoCapture(cv2.CAP_DSHOW)
-# cap = cv2.VideoCapture("example.mkv")
+
+cap_type = cap.get(cv2.CAP_PROP_BACKEND)
 all_frame_features = []
 cnt = 0
 
 while cap.isOpened():
     success, image = cap.read()
     if not success:
-        print("Ignoring empty camera frame.")
         # If loading a video, use 'break' instead of 'continue'.
-        continue
+        if cap_type == cv2.CAP_DSHOW:
+            print("Ignoring empty camera frame.")
+            continue
+        else:
+            print("video end")
+            break
 
     # Flip the image horizontally for a later selfie-view display, and convert
     # the BGR image to RGB.

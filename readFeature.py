@@ -2,7 +2,7 @@ import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
 from utils import *
-filename = "data1.h5"
+filename = "data_test.h5"
 
 labels = []
 show_data_index = 0
