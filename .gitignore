@@ -1,1 +1,4 @@
 *.h5
+*.mp4
+*.mkv
+__pycache__
