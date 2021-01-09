@@ -2,7 +2,7 @@ import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
 import tensorflow as tf
-
+from utils import *
 
 labels = ['VirtualFive', 'VirtualFour', 'VirtualGood', 
           'VirtualOK', 'VirtualOne', 'VirtualRotate', 
@@ -21,13 +21,7 @@ hands = mp_hands.Hands(
     min_detection_confidence=0.7, 
     min_tracking_confidence=0.3
 )
-def calShift(data):
-    data_copy = data.copy()
-    shift_arr = np.argmin(data, axis=0)
-    data_copy[:,0] -= data[shift_arr[0],0] ##X
-    data_copy[:,1] -= data[shift_arr[1],1] ##Y
-    data_copy[:,2] -= data[shift_arr[2],2] ##Z
-    return data_copy
+
 cap = cv2.VideoCapture(cv2.CAP_DSHOW)
 while cap.isOpened():
     success, image = cap.read()

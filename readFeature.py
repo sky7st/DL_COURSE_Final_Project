@@ -1,23 +1,14 @@
 import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
-
+from utils import *
 filename = "data1.h5"
 
 labels = []
 show_data_index = 0
 show_key_index = 0
 
-cam_h = 480
-cam_w = 640
 
-def drawData(data):
-    empty_img = np.zeros((cam_h, cam_w, 3), dtype=np.float)
-    for i in range(data.shape[0]):
-        x = int(data[i][0] * cam_w)
-        y = int(data[i][1] * cam_h)
-        empty_img = cv2.circle(empty_img, (x, y), radius=0, color=(0, 0, 255), thickness=4)
-    return empty_img
 with h5py.File(filename, 'r+') as h5f:
     
     labels = list(h5f.keys())
