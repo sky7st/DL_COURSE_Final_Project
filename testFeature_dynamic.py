@@ -2,11 +2,11 @@ import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
 
-video_folder_path = "Video"
+video_folder_path = "Video/滑鼠右鍵"
 
 save_filename = "data_dynamic.h5"
 
-fps = 30
+fps = 60
 timeout_ms = int(1000.0/fps)
 ####my label param####
 
@@ -43,8 +43,8 @@ for video_path in video_paths:
     filename = os.path.basename(video_path)
     
     cap = cv2.VideoCapture(video_path)
+    fps = cap.get(cv2.CAP_PROP_FPS)
     cap_type = cap.get(cv2.CAP_PROP_BACKEND)
-    print(cap.get(cv2.CAP_PROP_FPS))
     all_frame_features = []
     frame_cnt = 0
     while cap.isOpened():
@@ -83,8 +83,9 @@ for video_path in video_paths:
                     np.array([data_point.x, data_point.y, data_point.z])
                 )
             one_frame_feature = np.array(one_frame_feature)
-            all_frame_features.append(one_frame_feature)
-            frame_cnt += 1
+            if ((fps == 60) and (frame_cnt % 2 == 0)) or fps == 30:
+                all_frame_features.append(one_frame_feature)
+        frame_cnt += 1
         cv2.putText(image, "Cnt:{}, Frame Cnt:{}".format(file_cnt, frame_cnt), (10, 50), 1, 2, (0, 0, 255), 2)
         cv2.putText(image, "File:{}".format(filename), (10, 30), 1, 2, (0, 0, 255), 2)
         cv2.imshow('MediaPipe Hands', image)
@@ -110,4 +111,4 @@ with h5py.File(save_filename, 'a') as h5f:
     for i, feature in enumerate(video_features):
         dataset_name = dataset_names[i]
         group[dataset_name] = feature
-
+    print("end save {}".format(save_filename))
