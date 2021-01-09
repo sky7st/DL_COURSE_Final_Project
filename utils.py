@@ -1,15 +1,36 @@
 import cv2
 import numpy as np
 from statics import *
+import mediapipe as mp
 
-def drawData(data, image=None):
+mp_hands_connections = mp.solutions.hands.HAND_CONNECTIONS
+
+def drawData(data, image=None, drawConnect=True):
     if image is None:
         image = np.zeros((cam_h, cam_w, 3), dtype=np.float)
+    if drawConnect:
+        for connection in mp_hands_connections:
+            start_idx = connection[0]
+            end_idx = connection[1]
+
+            start_x = int(data[start_idx][0] * cam_w)
+            start_y = int(data[start_idx][1] * cam_h)
+
+            end_x = int(data[end_idx][0] * cam_w)
+            end_y = int(data[end_idx][1] * cam_h)
+            cv2.line(image, 
+                    (start_x, start_y), 
+                    (end_x, end_y), 
+                    color=(255, 0, 0), thickness=2)
     for i in range(data.shape[0]):
         x = int(data[i][0] * cam_w)
         y = int(data[i][1] * cam_h)
         image = cv2.circle(image, (x, y), radius=0, color=(0, 0, 255), thickness=4)
+
+
+
     return image
+
 
 def calShift(data):
     data_copy = data.copy()
