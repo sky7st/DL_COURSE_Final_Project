@@ -24,26 +24,30 @@ hands = mp_hands.Hands(
 )
 
 # cap = cv2.VideoCapture(cv2.CAP_DSHOW)
-cap = cv2.VideoCapture("test_dynamic.mkv")
+cap = cv2.VideoCapture(1)
+# cap = cv2.VideoCapture("test_dynamic.mkv")
 
 cap_type = cap.get(cv2.CAP_PROP_BACKEND)
 
 frame_cnt = 0
 feature_cnt = 0
 none_feature_cnt = 0
-
+result_index_conv = -1
+result_index_conv_edge = -1
 total_frame = []
 result_ls = []
 result_0, result_1, result_2 = [], [], []
 result_0_conv, result_1_conv, result_2_conv = [], [], []
+result_0_conv_edge, result_1_conv_edge, result_2_conv_edge = [], [], []
 conv_fifo_left, conv_fifo_right = [], []
 
 first_draw = False
 
-fig, ax = plt.subplots(2,1)
+fig, ax = plt.subplots(3,1)
 fig.tight_layout()
 ax[0].legend()
 ax[1].legend()
+ax[2].legend()
 
 ax[0].set_xlabel("Feature Frame Cnt")
 ax[0].set_ylabel("Prediction")
@@ -53,8 +57,13 @@ ax[1].set_xlabel("Feature Frame Cnt")
 ax[1].set_ylabel("Prediction")
 ax[1].set_title("Filtered Result")
 
+ax[2].set_xlabel("Feature Frame Cnt")
+ax[2].set_ylabel("Prediction")
+ax[2].set_title("Filtered Edge Result")
+
 ax[0].set_ylim([-0.1, 1.1])
 ax[1].set_ylim([-0.1, 1.1])
+ax[2].set_ylim([-0.1, 1.1])
 
 
 while cap.isOpened():
@@ -130,6 +139,7 @@ while cap.isOpened():
 
         left_conv = predictFilter(conv_fifo_left)
         right_conv = predictFilter(conv_fifo_right)
+        previous_dynamic_gesture = result_index_conv
         if not(left_conv or right_conv):
             result_index_conv = 1
             result_0_conv.append(0.0)
@@ -150,7 +160,26 @@ while cap.isOpened():
             result_0_conv.append(0.0)
             result_1_conv.append(1.0)
             result_2_conv.append(0.0)
-            
+        
+        if previous_dynamic_gesture != result_index_conv: ## rising edge
+            result_index_conv_edge = result_index_conv
+            if result_index_conv_edge == 0:
+                result_0_conv_edge.append(1.0)
+                result_1_conv_edge.append(0.0)
+                result_2_conv_edge.append(0.0)
+            elif result_index_conv_edge == 1:
+                result_0_conv_edge.append(0.0)
+                result_1_conv_edge.append(1.0)
+                result_2_conv_edge.append(0.0)
+            else:
+                result_0_conv_edge.append(0.0)
+                result_1_conv_edge.append(0.0)
+                result_2_conv_edge.append(1.0)
+        else:
+            result_index_conv_edge = 1
+            result_0_conv_edge.append(0.0)
+            result_1_conv_edge.append(1.0)
+            result_2_conv_edge.append(0.0)
         cv2.putText(image, "Org Result:{}".format(labels[result_index]), (10, 30), 1, 1.5, (0, 0, 255), 1)
         cv2.putText(image, "Filtered Result:{}".format(labels[result_index_conv]), (10, 50), 1, 1.5, (0, 0, 255), 1)
 
@@ -178,6 +207,9 @@ ax[1].plot(result_0_conv, color='blue', label='left click')
 ax[1].plot(result_1_conv, color='black', label='moving')
 ax[1].plot(result_2_conv, color='red', label='right click')
 
-plt.legend()
+ax[2].plot(result_0_conv_edge, color='blue', label='left click') 
+ax[2].plot(result_1_conv_edge, color='black', label='moving')
+ax[2].plot(result_2_conv_edge, color='red', label='right click')
+# plt.legend()
 plt.show()
 # plt.close(fig)
