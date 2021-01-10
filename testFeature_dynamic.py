@@ -2,7 +2,7 @@ import cv2, os, sys, time, h5py
 import mediapipe as mp
 import numpy as np
 
-video_folder_path = "Video/滑鼠右鍵"
+video_folder_path = "Video/data/滑鼠移動"
 
 save_filename = "data_dynamic.h5"
 
@@ -13,7 +13,7 @@ timeout_ms = int(1000.0/fps)
 label_basics = ["MouseLeft", "MouseRight", "MouseMove",
                 "PalmUp", "PalmDown", "PalmLeft", "PalmRight", "PalmMove",
                 "FingerClockwise", "FingerCounterclockwise", "FingerMove"]
-label_name = label_basics[1]   
+label_name = label_basics[2]   
 ######################
 
 mp_drawing = mp.solutions.drawing_utils
@@ -97,6 +97,8 @@ for video_path in video_paths:
     all_frame_features = np.array(all_frame_features)
     video_features.append(all_frame_features)
     dataset_name = "{}_{}".format(label_name, int(time.time()))
+    if dataset_name in dataset_names:
+        dataset_name = dataset_name + str(file_cnt)
     dataset_names.append(dataset_name)
     file_cnt += 1
 hands.close()
