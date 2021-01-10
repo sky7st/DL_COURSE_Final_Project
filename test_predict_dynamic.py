@@ -30,24 +30,32 @@ cap_type = cap.get(cv2.CAP_PROP_BACKEND)
 
 frame_cnt = 0
 feature_cnt = 0
-predict_cnt = 0
 none_feature_cnt = 0
-
 
 total_frame = []
 result_ls = []
 result_0, result_1, result_2 = [], [], []
+result_0_conv, result_1_conv, result_2_conv = [], [], []
 conv_fifo_left, conv_fifo_right = [], []
-
 
 first_draw = False
 
-fig = plt.figure(figsize=(12, 6))
-ax = plt.axes()
-ax.set_ylim([-0.1, 1.1])
-plt.legend()
-plt.xlabel("Feature Frame Cnt")
-plt.ylabel("Prediction")
+fig, ax = plt.subplots(2,1)
+fig.tight_layout()
+ax[0].legend()
+ax[1].legend()
+
+ax[0].set_xlabel("Feature Frame Cnt")
+ax[0].set_ylabel("Prediction")
+ax[0].set_title("Org Result")
+
+ax[1].set_xlabel("Feature Frame Cnt")
+ax[1].set_ylabel("Prediction")
+ax[1].set_title("Filtered Result")
+
+ax[0].set_ylim([-0.1, 1.1])
+ax[1].set_ylim([-0.1, 1.1])
+
 
 while cap.isOpened():
     success, image = cap.read()
@@ -93,23 +101,58 @@ while cap.isOpened():
             total_frame.pop(0)
             total_frame.append(one_frame_feature_shift)
 
-        if len(total_frame) == avg_cnt:
-            total_frame_np = np.array(total_frame)
-            x_test = np.expand_dims(total_frame_np, axis=0)
+        # if len(total_frame) == avg_cnt:
+        total_frame_np = np.array(total_frame)
+        x_test = np.expand_dims(total_frame_np, axis=0)
 
-            result = model.predict(x_test)
-            result_ls.append(result[0])
+        result = model.predict(x_test)
+        result_ls.append(result[0])
 
-            result_0.append(result[0][0])
-            result_1.append(result[0][1])
-            result_2.append(result[0][2])
+        result_0.append(result[0][0])
+        result_1.append(result[0][1])
+        result_2.append(result[0][2])
 
-            result_index = result[0].argmax()
-            # if result[0][result_index] < 0.6:
-            #     result_index = 1
+        result_index = result[0].argmax()
+        # if result[0][result_index] < 0.6:
+        #     result_index = 1
 
-            cv2.putText(image, "Result:{} {}".format(result_index, labels[result_index]), (10, 30), 1, 2, (0, 0, 255), 2)
-            predict_cnt += 1
+        if len(conv_fifo_left) < 15:
+            conv_fifo_left.append(result[0][0])
+        else:
+            conv_fifo_left.pop(0)
+            conv_fifo_left.append(result[0][0])
+
+        if len(conv_fifo_right) < 15:
+            conv_fifo_right.append(result[0][2])
+        else:
+            conv_fifo_right.pop(0)
+            conv_fifo_right.append(result[0][2])
+
+        left_conv = predictFilter(conv_fifo_left)
+        right_conv = predictFilter(conv_fifo_right)
+        if not(left_conv or right_conv):
+            result_index_conv = 1
+            result_0_conv.append(0.0)
+            result_1_conv.append(1.0)
+            result_2_conv.append(0.0)
+        elif left_conv:
+            result_index_conv = 0
+            result_0_conv.append(1.0)
+            result_1_conv.append(0.0)
+            result_2_conv.append(0.0)
+        elif right_conv:
+            result_index_conv = 2
+            result_0_conv.append(0.0)
+            result_1_conv.append(0.0)
+            result_2_conv.append(1.0)
+        else:
+            result_index_conv = 1
+            result_0_conv.append(0.0)
+            result_1_conv.append(1.0)
+            result_2_conv.append(0.0)
+            
+        cv2.putText(image, "Org Result:{}".format(labels[result_index]), (10, 30), 1, 1.5, (0, 0, 255), 1)
+        cv2.putText(image, "Filtered Result:{}".format(labels[result_index_conv]), (10, 50), 1, 1.5, (0, 0, 255), 1)
 
         feature_cnt += 1
         
@@ -127,9 +170,14 @@ cap.release()
 
 
 ### draw plot
-ax.plot(result_0, color='blue', label='left click') 
-ax.plot(result_1, color='black', label='moving')
-ax.plot(result_2, color='red', label='right click')
+ax[0].plot(result_0, color='blue', label='left click') 
+ax[0].plot(result_1, color='black', label='moving')
+ax[0].plot(result_2, color='red', label='right click')
 
+ax[1].plot(result_0_conv, color='blue', label='left click') 
+ax[1].plot(result_1_conv, color='black', label='moving')
+ax[1].plot(result_2_conv, color='red', label='right click')
+
+plt.legend()
 plt.show()
 # plt.close(fig)

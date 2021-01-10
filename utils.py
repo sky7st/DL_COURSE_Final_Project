@@ -39,3 +39,17 @@ def calShift(data):
     data_copy[:,1] -= data[shift_arr[1],1] ##Y
     data_copy[:,2] -= data[shift_arr[2],2] ##Z
     return data_copy
+
+def predictFilter(buffer):
+    cnt = 0
+    if len(buffer) < 10:
+        return False
+    else:
+        for data in buffer:
+            if data > 0.8:
+                cnt += 1
+        if cnt >= 10:
+            return True
+        else:
+            return False
+    
